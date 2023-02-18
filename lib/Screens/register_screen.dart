@@ -1,5 +1,4 @@
-import 'dart:math';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:food_application_1/Model/user_account.dart';
 import 'package:food_application_1/Widgets/app_text.dart';
@@ -16,12 +15,13 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  
+  late UserAccount userAccount;
   late bool isVisibility ;
   late final TextEditingController fullnameController;
   late final TextEditingController emialController;
   late final TextEditingController passwordController;
   late final TextEditingController confirmController;
-  late final UserAccount userAccount;
   late String username;
   late String password;
   late String email;
@@ -46,6 +46,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     confirmController.addListener(() {setState(() {
       
     }); });
+  }
+  @override
+  void dispose() {
+    fullnameController.dispose();
+    emialController.dispose();
+    passwordController.dispose();
+    confirmController.dispose();
+    super.dispose();
+  }
+  void _clearText(){
+    fullnameController.clear();
+    emialController.clear();
+    passwordController.clear();
+    confirmController.clear();
   }
 
   @override
@@ -80,8 +94,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SolidButton(
                 text: 'Register',
                 onPress:(() {
-                  userAccount = UserAccount(username: username, password: password,email: email);
-                  Navigator.pushNamed(context, '//Vhome_screen',arguments: userAccount);
+                  createUser(username: username, email: email, password: password);
+                  Navigator.pushNamed(
+                      context, 
+                      'Vhome_screen',
+                      arguments: UserAccount(username: username, email: email, password: password)
+                  );
                 })
               ),
               const SizedBox(height: 10,),
@@ -145,4 +163,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     );
   }
+// read data into firebase
+  Future createUser({required String username, required String email, required String password})async{
+    final docUser = FirebaseFirestore.instance.collection('user').doc();
+    final user = UserAccount(username: username, email: email, password:  password);
+    final json = user.toJson(); // return map of user info
+
+    await docUser.set(json);
+  }
+
 }

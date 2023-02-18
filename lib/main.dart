@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:food_application_1/Model/user_account.dart';
 import 'package:food_application_1/Screens/change_password_screen.dart';
@@ -9,7 +10,10 @@ import 'package:food_application_1/Screens/password_changed_screen.dart';
 import 'package:food_application_1/Screens/register_screen.dart';
 import 'Screens/slash_screen.dart';
 
-void main(List<String> args) {
+Future main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  
   runApp(const FoodApp());
 }
 
@@ -22,7 +26,7 @@ class FoodApp extends StatelessWidget {
       // home: const SlashScreen(),
       debugShowCheckedModeBanner: false,
 
-      initialRoute: '//register_screen',
+      initialRoute: '/',
       onGenerateRoute: (settings){
         if(settings.name=='/'){
           return MaterialPageRoute(builder: ((context) => const SlashScreen()));
@@ -48,7 +52,7 @@ class FoodApp extends StatelessWidget {
         else if(settings.name == '/VpasswordChanged_screen'){
           return MaterialPageRoute(builder: ((context) => const PasswordChangedScreen()));
         }
-        else if(settings.name == '//Vhome_screen'){
+        else if(settings.name == 'Vhome_screen'){
           return MaterialPageRoute(builder: ((context) {
             final arg = settings.arguments as UserAccount;
             return HomeScreen(userAccount: arg,);

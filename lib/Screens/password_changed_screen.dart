@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:food_application_1/Widgets/rounded_button.dart';
-import 'package:food_application_1/Widgets/solid_button.dart';
 import 'package:food_application_1/Widgets/toptitle.dart';
 
 class PasswordChangedScreen extends StatefulWidget {

@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:food_application_1/Model/user_account.dart';
 import 'package:food_application_1/Widgets/app_text.dart';
 import 'package:food_application_1/Widgets/outlined_button.dart';
 import 'package:food_application_1/Widgets/solid_button.dart';
@@ -16,6 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController emialController;
   late final TextEditingController passwordController;
   late bool isVisibility = false;
+  late String email;
+  late String password;
   
   @override
   void initState() {
@@ -35,57 +39,78 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    email = emialController.text;// get text from text field
+    password = passwordController.text;// get text from text field
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child:Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            // top title
-              SizedBox(height: MediaQuery.of(context).size.height *0.07,),
-              const TopTitle(firstText: 'Login to', secondText: 'find the best food'),
-            // textfield
-              SizedBox(height: MediaQuery.of(context).size.height *0.1,),
-              _buildEmailTextField(),
-              const Divider(height: 1,),
-              _buildPasswordTextField(),
-              const Divider(height: 1,),
-            // forget password text
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+      body: StreamBuilder<List<UserAccount>>(
+        stream: readUser(),
+        builder: (context, snapshot) {// snapshot is the list of UserAccount
+          // if error
+          if(snapshot.hasError){
+            return const Center(
+              child: CircularProgressIndicator(backgroundColor: Colors.black,)
+            );
+          }
+          // completed
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child:Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextButton(
-                    onPressed: ((){
-                      Navigator.pushNamed(context, '//forgotPassword_screen');
-                    }), 
-                    child: const AppText.poppin(text: 'Forget password?',size: 14,)
-                  )
-                ],
-              ),
-            // button
-              const SizedBox(height: 20,),
-              SolidButton(text: 'Sign in',onPress: () {},),
-              const SizedBox(height: 20,),
-              const OutlineButton(text: 'Sign up with facebook',),
-
-            // bottom text
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const AppText.poppin(text: "Don't have an account?",size: 14,),
-                  TextButton(
-                    onPressed: (() {
-                      Navigator.pushNamed(context, '//register_screen');
-                    }), 
-                    child: const AppText.poppinBold(text: 'Register',size: 14,)
+                // top title
+                  SizedBox(height: MediaQuery.of(context).size.height *0.07,),
+                  const TopTitle(firstText: 'Login to', secondText: 'find the best food'),
+                // textfield
+                  SizedBox(height: MediaQuery.of(context).size.height *0.1,),
+                  _buildEmailTextField(),
+                  const Divider(height: 1,),
+                  _buildPasswordTextField(),
+                  const Divider(height: 1,),
+                // forget password text
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: ((){
+                          Navigator.pushNamed(context, '//forgotPassword_screen');
+                        }), 
+                        child: const AppText.poppin(text: 'Forget password?',size: 14,)
+                      )
+                    ],
                   ),
+                // button
+                  const SizedBox(height: 20,),
+      
+                  SolidButton(
+                    text: 'Sign in',
+                    onPress: (){
+                      _onPressedButton(snapshot.data!); // snapshot.data return list of userAccounts
+                    },
+                  ),
+      
+                  const SizedBox(height: 20,),
+                  const OutlineButton(text: 'Sign up with facebook',),
+      
+                // bottom text
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const AppText.poppin(text: "Don't have an account?",size: 14,),
+                      TextButton(
+                        onPressed: (() {
+                          Navigator.pushNamed(context, '//register_screen');
+                        }), 
+                        child: const AppText.poppinBold(text: 'Register',size: 14,)
+                      ),
+                    ],
+                  )
+                  
                 ],
               )
-              
-            ],
-          )
-        )
+            )
+          );
+        }
       ),
     );
   }
@@ -115,5 +140,38 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       },
     );
+  }
+  // get data form firebase type Stream<List<UserAccount>>
+  Stream<List<UserAccount>> readUser(){
+    return FirebaseFirestore.instance.collection('user')
+          .snapshots()
+          .map((snapshots) => snapshots.docs.map((docs) => UserAccount.fromJson(docs.data())).toList());
+    }
+
+  // when pressed button login
+  void _onPressedButton(List<UserAccount> userlist){
+    bool ishasUser = false;
+    //check account to login
+    for(var i=0; i<userlist.length; i++){
+      if(userlist[i].email==email && userlist[i].password== password){
+        Navigator.pushNamed(context, 'Vhome_screen',arguments:userlist[i]);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const AppText.poppin(text:'Login successfully!', size: 14,),
+            backgroundColor: Colors.green[400],
+        ));
+        ishasUser = true;
+        break;
+      }
+    }
+    if(!ishasUser){
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+            content: const AppText.poppin(text:'Incorrect email or password!!', size: 14,),
+            backgroundColor: Colors.red[400],
+          )
+        );
+    }
+    
   }
 }
